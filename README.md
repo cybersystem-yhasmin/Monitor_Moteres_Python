@@ -1,2 +1,180 @@
-# monitor-moteres-python
-Atividade prática no GIT Hub 
+## Monitor-Moteres-Python
+
+## Atividade prática no GIT Hub
+
+# RESUMO DO CODIGO 
+
+Neste código vai informa como e o funcionamento de um **Motor** 
+
+_Nele vai exibir **Data e horatio** e vai disser também a **temperatura maxima
+corrente maxima,vibracao maxima,rpm minimo, rpm maxima** desse motor como ele está o estado._ 
+
+### Leituras dos motores 
+
+**SETOR** 
+1. Estamparia
+2. Usinagem
+3. Bobinagem
+4. Pintura
+
+__Na leitura do motor vai mostra os setor do motor como Estamparia,Usinagem,Bobinagem,Pintura  e vai mostra temperatura,corrente,vibracao,rpm,potencia_kw para ver como está o funcionamento desses setores é vai mostra se esta critico,normal ou em atenção__
+
+#### Alertas
+
+* Alerta: Superaquecimento 
+* Alerta: Sobrecorrente 
+* Alerta: Vibracao elevada
+
+**Depois vai dar um resumo  de como está os motores**
+
+Pramtro|Limite|Unidade
+:---|:---|---:
+ Temp. media: 72.58 C | Corr. media: 15.7 A | Potencia total: 31.5 kW | Maior temp.: MTR-02
+
+_depois vai mostra o plno de manutencao preventiva._
+
+#PLANO DE MANUTENCAO PREVENTIVA:
+ - Parada imediata (CRITICO): ['MTR-02']
+ - Inspecao programada (ATENCAO):['MTR-03']
+ - Operacao estavel (NORMAL): ['MTR-01', 'MTR-04']
+
+
+
+
+#CÓDIGO
+ #Trecho 1 — Commit 2 (Inserir no início de monitor_industrial.py)
+
+from datetime import datetime
+
+SISTEMA_NOME = "Monitoramento de Motores Industriais"
+VERSAO = "1.0.0"
+
+LIMITES = {
+    "temperatura_max": 80.0,
+    "corrente_max": 18.5,
+    "vibracao_max": 4.5,
+    "rpm_min": 1400,
+    "rpm_max": 1800,
+}
+
+LEITURAS_MOTORES = [
+    {"id": "MTR-01", "setor": "Estamparia", "temperatura": 68.4, "corrente": 14.2, "vibracao": 2.1, "rpm": 1750, "potencia_kw": 7.5},
+    {"id": "MTR-02", "setor": "Usinagem", "temperatura": 84.7, "corrente": 19.3, "vibracao": 5.2, "rpm": 1690, "potencia_kw": 11.0},
+    {"id": "MTR-03", "setor": "Bobinagem", "temperatura": 76.2, "corrente": 17.8, "vibracao": 4.7, "rpm": 1520, "potencia_kw": 5.5},
+    {"id": "MTR-04", "setor": "Pintura", "temperatura": 61.0, "corrente": 11.5, "vibracao": 1.8, "rpm": 1780, "potencia_kw": 7.5},
+]
+
+
+#Trecho 2 — Commit 3 (Validação de leituras)
+
+def validar_leitura(motor):
+    campos_obrigatorios = ["id", "setor", "temperatura", "corrente", "vibracao", "rpm", "potencia_kw"]
+    for campo in campos_obrigatorios:
+        if campo not in motor or motor[campo] is None:
+            return False
+    if motor["temperatura"] < 0 or motor["corrente"] < 0 or motor["vibracao"] < 0 or motor["rpm"] < 0:
+        return False
+    return True
+
+
+def obter_leituras_validas(lista_motores):
+    return [m for m in lista_motores if validar_leitura(m)]
+
+
+#Trecho 3 — Commit 4 (Análise de alertas e criticidade)
+
+def analisar_alertas(motor):
+    alertas = []
+    if motor["temperatura"] > LIMITES["temperatura_max"]:
+        alertas.append(f"Superaquecimento ({motor['temperatura']:.1f} C)")
+    if motor["corrente"] > LIMITES["corrente_max"]:
+        alertas.append(f"Sobrecorrente ({motor['corrente']:.1f} A)")
+    if motor["vibracao"] > LIMITES["vibracao_max"]:
+        alertas.append(f"Vibracao elevada ({motor['vibracao']:.1f} mm/s)")
+    if motor["rpm"] < LIMITES["rpm_min"] or motor["rpm"] > LIMITES["rpm_max"]:
+        alertas.append(f"Rotacao fora da faixa ({motor['rpm']} RPM)")
+
+    if len(alertas) == 0:
+        status = "NORMAL"
+    elif len(alertas) == 1:
+        status ="ATENCAO"
+    else:
+        status ="CRITICO"
+
+    return status, alertas
+
+#Trecho 4 — Commit 5 (Cálculo de estatísticas operacionais)
+
+def calcular_estatisticas(motores):
+    total = len(motores)
+    if total == 0:
+        return {}
+
+    temp_media = sum(m["temperatura"] for m in motores) / total
+    corrente_media = sum(m["corrente"] for m in motores) / total
+    potencia_total = sum(m["potencia_kw"] for m in motores)
+    maior_temp = max(motores, key=lambda m: m["temperatura"])
+
+    return {
+        "total_motores": total,
+        "temperatura_media": round(temp_media, 2),
+        "corrente_media": round(corrente_media, 2),
+        "potencia_total_kw": round(potencia_total, 2),
+        "motor_mais_quente": maior_temp["id"],
+    }
+
+#Trecho 5 — Commit 6 (Painel de exibição e execução principal)
+def exibir_painel(motores):
+    print("=" * 64)
+    print(f"{SISTEMA_NOME} - v{VERSAO}")
+    print(f"Data/Hora da leitura: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+    print("=" * 64)
+
+    for motor in motores:
+        status, alertas = analisar_alertas(motor)
+        print(
+            f"[{status:<7}] {motor['id']} ({motor['setor']}) | "
+            f"Temp: {motor['temperatura']} C | Corr: {motor['corrente']} A | "
+            f"Vib: {motor['vibracao']} mm/s | RPM: {motor['rpm']}"
+        )
+        for alerta in alertas:
+            print(f"  -> Alerta: {alerta}")
+
+    stats = calcular_estatisticas(motores)
+    print("-" * 64)
+    print(
+        f"Resumo: {stats['total_motores']} motores | "
+        f"Temp. media: {stats['temperatura_media']} C | "
+        f"Corr. media: {stats['corrente_media']} A | "
+        f"Potencia total: {stats['potencia_total_kw']} kW | "
+        f"Maior temp.: {stats['motor_mais_quente']}"
+    )
+    print("=" * 64)
+
+if __name__ == "__main__":
+    motores_validos = obter_leituras_validas(LEITURAS_MOTORES)
+    exibir_painel(motores_validos)
+
+
+#Trecho 6 — Commit 8 (Após Issue #1 e Pull 2; adicionar acima do bloco main)
+
+def gerar_plano_manutencao(motores):
+    plano = {"CRITICO": [], "ATENCAO": [], "NORMAL": []}
+    for motor in motores:
+        status, alertas = analisar_alertas(motor)
+        plano[status].append({"id": motor["id"], "setor": motor["setor"], "ocorrencias": len(alertas)})
+    return plano
+
+
+def exibir_manutencao(motores):
+    plano = gerar_plano_manutencao(motores)
+    print("\nPLANO DE MANUTENCAO PREVENTIVA:")
+    print(f" - Parada imediata (CRITICO): {[m['id'] for m in plano['CRITICO']]}")
+    print(f" - Inspecao programada (ATENCAO): {[m['id'] for m in plano['ATENCAO']]}")
+    print(f" - Operacao estavel (NORMAL): {[m['id'] for m in plano['NORMAL']]}")
+
+
+if __name__ == "__main__":
+    motores_validos = obter_leituras_validas(LEITURAS_MOTORES)
+    exibir_painel(motores_validos)
+    exibir_manutencao(motores_validos)
