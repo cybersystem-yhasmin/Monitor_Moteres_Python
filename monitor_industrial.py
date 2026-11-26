@@ -80,7 +80,6 @@ def calcular_estatisticas(motores):
     }
 
 #Trecho 5 — Commit 6 (Painel de exibição e execução principal)
-
 def exibir_painel(motores):
     print("=" * 64)
     print(f"{SISTEMA_NOME} - v{VERSAO}")
@@ -107,7 +106,6 @@ def exibir_painel(motores):
         f"Maior temp.: {stats['motor_mais_quente']}"
     )
     print("=" * 64)
-
 
 if __name__ == "__main__":
     motores_validos = obter_leituras_validas(LEITURAS_MOTORES)
